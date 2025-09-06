@@ -1,4 +1,4 @@
-  import type { ReadmeData } from './types';
+  import type { ReadmeData , GitHubRepo } from './types';
 
 
 export function generateReadme(data: ReadmeData): string {
