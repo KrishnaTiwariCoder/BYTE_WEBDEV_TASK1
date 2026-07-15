@@ -58,7 +58,7 @@ export default function ReadmeGenerator() {
       
       updateLoadingState('Fetching repository contents...', 70);
       const contents = await githubService.fetchContents(owner, repo);
-      
+
       updateLoadingState('Generating content with AI...', 85);
       const geminiService = new GeminiApiService(geminiApiKey);
       const generated = await geminiService.generateContent(repoData, languages, contents);

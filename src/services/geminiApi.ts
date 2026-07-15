@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import type { GitHubRepo, RepoContents, GeneratedContent } from '../types';
 import { ApiError } from './githubApi';
 
@@ -12,10 +13,11 @@ export class GeminiApiService {
   async generateContent(
     repo: GitHubRepo,
     languages: Record<string, number>,
-    contents: RepoContents[]
+    contents: RepoContents[],
   ): Promise<GeneratedContent> {
     try {
       const prompt = this.buildPrompt(repo, languages, contents);
+      console.log("5" , prompt);
       
       const response = await fetch(`${this.baseUrl}?key=${this.apiKey}`, {
         method: 'POST',
@@ -37,6 +39,7 @@ export class GeminiApiService {
       
       const data = await response.json();
       const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      console.log("6" , generatedText);
       
       if (!generatedText) {
         throw new ApiError('Failed to generate content from Gemini API');
@@ -52,38 +55,37 @@ export class GeminiApiService {
   private buildPrompt(
     repo: GitHubRepo,
     languages: Record<string, number>,
-    contents: RepoContents[]
+    contents: RepoContents[],
+    
   ): string {
     const languageList = Object.keys(languages).join(', ');
     const fileList = contents.map(c => c.name).join(', ');
     
     return `
-Generate professional README content for a GitHub repository with the following information:
-
-Repository: ${repo.name}
-Description: ${repo.description || 'No description provided'}
-Languages: ${languageList}
-Files: ${fileList}
-Topics: ${repo.topics.join(', ')}
-Stars: ${repo.stargazers_count}
-Forks: ${repo.forks_count}
-
-Please provide the following in JSON format:
-{
-  "description": "A comprehensive, engaging description of what this project does (2-3 sentences)",
-  "features": ["Feature 1", "Feature 2", "Feature 3", "Feature 4", "Feature 5"],
-  "usage": "Basic usage instructions with code examples if applicable",
-  "installation": "Step-by-step installation instructions"
-}
-
-Requirements:
-- Description should be professional and highlight the project's value
-- Features should be 4-6 key functionalities or benefits
-- Usage should include practical examples
-- Installation should be clear and complete
-- Consider the programming languages and file structure when generating content
-- Make it sound professional and production-ready
-`;
+      You are an expert AI assistant that generates professional GitHub README files in Markdown.
+      Based on the information provided below, create a complete README.
+      Your output MUST strictly follow this structure:
+      1. Project Title
+      2. Description
+      3. Features
+      4. Installation Guide
+      5. Tech Stack
+      6. Project Structure
+      7. License Information
+      IMPORTANT RULES:
+      - Output ONLY the raw Markdown content for the README file.
+      - Do NOT include any introductory text.
+      ---
+      Repository Information:
+      - Name: ${repo.name}
+      - Description: ${repo.description || "No description provided."}
+      - Languages: ${languageList || "Not specified."}
+      - License: ${repo.license ? repo.license.name : "Not specified."}
+      - Existing README (for context): ${contents ? `\n---\n${contents}\n---` : "None"}
+      - File Structure (sample):
+        ${fileList}
+      ---
+    `;
   }
   
   private parseGeneratedContent(text: string): GeneratedContent {
